@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QuickCart SuperMarket</title>
+
+  <!-- Link external CSS -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Firebase SDKs (Load before script.js) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <!-- Your main script -->
+  <script src="script.js" defer></script>
+</head>
+
+<body>
+
+<!-- Pages content (your original HTML structure is correct) -->
+
+<!-- Login Page -->
+<div id="loginPage" class="page active">
+  <div class="login-container">
+    <h2>Welcome to QuickCart SuperMarket</h2>
+    <input type="email" id="loginEmail" placeholder="Email" required>
+    <input type="password" id="loginPassword" placeholder="Password" required>
+    <button onclick="login()">Login</button>
+    <p>New user? <button class="register-button" onclick="showRegister()">Register Now</button></p>
+  </div>
+</div>
+
+<!-- Registration Page -->
+<div id="registerPage" class="page">
+  <div class="register-container">
+    <h2>Register for QuickCart SuperMarket</h2>
+    <input type="text" id="name" placeholder="Full Name" required>
+    <input type="tel" id="phone" placeholder="Phone Number" required>
+    <input type="email" id="registerEmail" placeholder="Email" required>
+    <input type="password" id="registerPassword" placeholder="Password (Min 8 chars, 1 number, 1 special char)" required>
+    <small style="color: red;">Must be at least 8 characters long, contain 1 number and 1 special character.</small>
+    <button onclick="register()">Register</button>
+    <p>Already have an account? <button class="register-button" onclick="showLogin()">Login</button></p>
+  </div>
+</div>
+
+
+<div id="customAlert" style="display: none; position: fixed; top: 50%; left: 50%; 
+transform: translate(-50%, -50%);
+background-color: rgb(95, 255, 95); color: rgb(0, 0, 0); padding: 20px 40px; font-size: 20px; 
+font-weight: bold; border: 3px solid black;
+border-radius: 10px; z-index: 9999; 
+text-align: center;">
+</div>
+
+<!-- Home Page -->
+<div id="homePage" class="page">
+  <header><span><b> 🛒 QuickCart SuperMarket 🛒 </b></span></header>
+  <nav>
+    <a href="#" onclick="event.preventDefault(); showHome()">Home</a>
+    <a href="#" onclick="event.preventDefault(); showProducts()">Products</a>
+    <button class="logout-button" onclick="logout()">Logout</button>
+  </nav>
+  <main>
+    <div class="container">
+      <div id="cart" class="panel">
+        <h2> 🛍️ Shopping Cart🛍️</h2>
+        <table id="cartList" border="1">
+          <tr>
+            <th>Product Name (ID)</th>
+            <th>Quantity</th>
+            <th>Total Price</th>
+            <th>Remove</th>
+          </tr>
+        </table>
+      </div>
+      <div id="productDetails" class="panel">
+        <h2><centre>🔍Scan Product🔍</centre></h2>
+        <input type="text" id="scannedNumber" placeholder="Scan product..." autofocus onkeypress="handleEnter(event)">
+        <button onclick="scanProduct()">Scan Product</button>
+        <div id="productInfo"></div>
+      </div>
+      <div id="checkout" class="panel">
+        <h2><centre>🛒Checkout 🛒</centre></h2>
+        <div class="bill-container">
+          <table id="billDetails">
+            <tr>
+              <th>Item</th>
+              <th>Qty</th>
+              <th>Price</th>
+            </tr>
+          </table>
+          <hr>
+          <p><strong>Subtotal:</strong> ₹<span id="subtotalAmount">0.00</span></p>
+          <p><strong>GST (5%):</strong> ₹<span id="taxAmount">0.00</span></p>
+          <p><strong>Total Amount:</strong> ₹<span id="totalAmount">0.00</span></p>
+          <hr>
+          <button class="checkout-btn" onclick="generateBill()">📝 Generate Bill</button>
+          <button class="checkout-btn" id="payNowButton" onclick="processPayment()" disabled>💳 Proceed to Payment</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Products Page -->
+<div id="productsPage" class="page">
+  <header><b>🛒 QuickCart SuperMarket 🛒</b></header>
+  <nav>
+    <a href="#" onclick="event.preventDefault(); showHome()">Home</a>
+    <a href="#" onclick="event.preventDefault(); showProducts()">Products</a>
+    <button class="logout-button" onclick="logout()">Logout</button>
+  </nav>
+  <main>
+    <h2><centre>Available Products</centre></h2>
+    <div class="products-container" id="productsContainer"></div>
+  </main>
+</div>
+
+<!-- Payment Modal -->
+<div id="paymentModal" class="modal">
+  <div class="modal-content">
+    <h2 id="paymentMessage">Processing Payment...</h2>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,60 @@
+{
+    "products": {
+        "0012182728": {
+            "id": "0012182728",
+            "name": "Apple",
+            "price": 10,
+            "image": "apple.jpeg",
+            "quantity": 20
+        },
+        "0039854025": {
+            "id": "0039854025",
+            "name": "Biscuit Pack",
+            "price": 40,
+            "image": "Biscuit Pack.jpg",
+            "quantity": 5
+        },
+        "0039855169": {
+            "id": "0039855169",
+            "name": "Coffee (200g)",
+            "price": 299,
+            "image": "Coffee (200g).webp",
+            "quantity": 10
+        },
+        "0039855180": {
+            "id": "0039855180",
+            "name": "Cooking Oil (1L)",
+            "price": 180,
+            "image": "Cooking Oil (1L).jpg",
+            "quantity": 15
+        },
+        "0039854003": {
+            "id": "0039854003",
+            "name": "Rice (5kg)",
+            "price": 350,
+            "image": "Rice (5kg).avif",
+            "quantity": 30
+        },
+        "0039855191": {
+            "id": "0039855191",
+            "name": "Shampoo (500ml)",
+            "price": 299,
+            "image": "Shampoo (500ml).webp",
+            "quantity": 16
+        },
+        "0039771949": {
+            "id": "0039771949",
+            "name": "Sugar (1kg)",
+            "price": 50,
+            "image": "Sugar (1kg).jpg",
+            "quantity": 25
+        },
+        "0039854036": {
+            "id": "0039854036",
+            "name": "Wheat Flour (5kg)",
+            "price": 250,
+            "image": "Wheat Flour (5kg).jpeg",
+            "quantity": 20
+        }
+    }
+}
