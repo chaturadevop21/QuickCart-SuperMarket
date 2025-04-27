@@ -351,20 +351,28 @@ function login() {
 
   auth.signInWithEmailAndPassword(email, password)
     .then(() => {
-      showAlert("Login successful!", "success");
-
+      showAlert("Login successful!", "#28a745"); // ✅ Success (green background)
+      document.getElementById("loginPage").classList.remove("active");
+      document.getElementById("homePage").classList.add("active");
       setTimeout(() => {
-        document.getElementById("loginPage").classList.remove("active");
-        document.getElementById("homePage").classList.add("active");
         document.getElementById("scannedNumber").focus();
-      }, 2000); // ⏳ Wait for 2 seconds (popup shows), THEN go to home page
+      }, 300);
     })
 
     .catch(error => {
       console.error(error);
-      showAlert(error.message);
+    
+      const errorCode = error.code;
+    
+      if (errorCode === "auth/user-not-found") {
+        showAlert("Account not found.", "#ff4d4d"); // 🔴 User does not exist
+      } else if (errorCode === "auth/wrong-password" || errorCode === "auth/invalid-login-credentials") {
+        showAlert("Wrong password,Please Try again.", "#ff4d4d"); // 🔴 Wrong password
+      } else {
+        showAlert(error.message, "#ff4d4d"); // Other unknown errors
+      }
     });
-}
+  }
 
 function logout() {
   showAlert("Logged out successfully!");
@@ -405,4 +413,3 @@ function showAlert(message, type = "success") {
     alertBox.style.display = "none";
   }, 2000);
 }
-  
