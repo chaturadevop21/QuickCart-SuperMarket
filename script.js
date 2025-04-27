@@ -365,11 +365,11 @@ function login() {
       const errorCode = error.code;
     
       if (errorCode === "auth/user-not-found") {
-        showAlert("Account not found.", "#ff4d4d"); // 🔴 User does not exist
+        showAlert("Account not found.", "#ff4d4d"); // 🔴 No account exists
       } else if (errorCode === "auth/wrong-password" || errorCode === "auth/invalid-login-credentials") {
         showAlert("Wrong password,Please Try again.", "#ff4d4d"); // 🔴 Wrong password
       } else {
-        showAlert(error.message, "#ff4d4d"); // Other unknown errors
+        showAlert("Something went wrong. Please try again.", "#ff4d4d"); // 🔴 Some unknown issue
       }
     });
   }
@@ -413,3 +413,4 @@ function showAlert(message, type = "success") {
     alertBox.style.display = "none";
   }, 2000);
 }
+  
