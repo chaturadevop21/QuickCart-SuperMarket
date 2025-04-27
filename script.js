@@ -351,28 +351,27 @@ function login() {
 
   auth.signInWithEmailAndPassword(email, password)
     .then(() => {
-      showAlert("Login successful!", "#28a745"); // ✅ Success (green background)
-      document.getElementById("loginPage").classList.remove("active");
-      document.getElementById("homePage").classList.add("active");
+      showAlert("Login successful!", "success");
+
       setTimeout(() => {
+        document.getElementById("loginPage").classList.remove("active");
+        document.getElementById("homePage").classList.add("active");
         document.getElementById("scannedNumber").focus();
-      }, 300);
+      }, 2000); // ⏳ Wait for 2 seconds (popup shows), THEN go to home page
     })
 
     .catch(error => {
       console.error(error);
-    
-      const errorCode = error.code;
-    
-      if (errorCode === "auth/user-not-found") {
-        showAlert("Account not found.", "#ff4d4d"); // 🔴 No account exists
-      } else if (errorCode === "auth/wrong-password" || errorCode === "auth/invalid-login-credentials") {
-        showAlert("Wrong password,Please Try again.", "#ff4d4d"); // 🔴 Wrong password
+
+      if (error.code === "auth/user-not-found") {
+        showAlert("Account not found.", "#ff4d4d"); // 🔥 Account doesn't exist
+      } else if (error.code === "auth/wrong-password") {
+        showAlert("Wrong password, try again.", "#ff4d4d"); // 🔥 Wrong password
       } else {
-        showAlert("Something went wrong. Please try again.", "#ff4d4d"); // 🔴 Some unknown issue
+        showAlert(error.message, "#ff4d4d"); // other unknown error fallback
       }
     });
-  }
+}
 
 function logout() {
   showAlert("Logged out successfully!");
