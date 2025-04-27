@@ -363,13 +363,20 @@ function login() {
       console.error(error);
     
       const errorCode = error.code;
+      const errorMessage = error.message;
     
       if (errorCode === "auth/user-not-found") {
-        showAlert("Account not found.", "#ff4d4d"); // 🔴 No account exists
-      } else if (errorCode === "auth/wrong-password" || errorCode === "auth/invalid-login-credentials") {
-        showAlert("Wrong password,Please Try again.", "#ff4d4d"); // 🔴 Wrong password
+        showAlert("Account not found.", "#ff4d4d");
+      } else if (errorCode === "auth/invalid-login-credentials") {
+        if (errorMessage.includes("no user record")) {
+          showAlert("Account not found.", "#ff4d4d");
+        } else {
+          showAlert("Wrong password, try again.", "#ff4d4d");
+        }
+      } else if (errorCode === "auth/wrong-password") {
+        showAlert("Wrong password, try again.", "#ff4d4d");
       } else {
-        showAlert("Something went wrong. Please try again.", "#ff4d4d"); // 🔴 Some unknown issue
+        showAlert("Something went wrong. Please try again.", "#ff4d4d");
       }
     });
   }
