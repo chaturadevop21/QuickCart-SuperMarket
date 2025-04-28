@@ -582,3 +582,12 @@ color: rgb(0, 0, 0);
     display: none;
     border: 2px solid white; /* Optional nice border */
   }
+  .product-popup {
+    margin-top: 10px;
+    padding: 10px;
+    background: #e3f2fd; /* light blue */
+    border: 1px solid #003efa; /* blue border */
+    border-radius: 8px;
+    font-size: 14px;
+    color: #002a69;
+  }
