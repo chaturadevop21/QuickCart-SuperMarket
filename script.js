@@ -90,12 +90,12 @@ function processPayment() {
 
   const options = {
     key: "rzp_test_GmqSaHXzUgzyFE", // ✅ Your Razorpay Test Key
-    amount: totalAmount * 100, // Amount in paise
+    amount: totalAmount * 100,       // Amount in paise
     currency: "INR",
     name: "QuickCart SuperMarket",
-    description: "Test Transaction - No actual money involved",
+    description: "Test Transaction",
     handler: function (response) {
-      showAlert("✅ Test Payment Successful! ID: " + response.razorpay_payment_id, "success");
+      showAlert("✅ Payment Successful! Payment ID: " + response.razorpay_payment_id, "success");
       updateProductQuantities();
       setTimeout(() => location.reload(), 2000);
     },
@@ -109,11 +109,12 @@ function processPayment() {
   };
 
   const rzp = new Razorpay(options);
-  rzp.open();
 
   rzp.on('payment.failed', function (response) {
     alert("Oops! Something went wrong.\nPayment Failed\nReason: " + response.error.description);
   });
+
+  rzp.open();
 }
 
   function updateProductQuantities() {
