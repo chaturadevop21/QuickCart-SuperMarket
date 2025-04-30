@@ -82,11 +82,44 @@ function generateBill() {
 }
 
 function processPayment() {
-  let totalAmount = document.getElementById("totalAmount").innerText;
-  if (parseFloat(totalAmount) === 0) {
-    showAlert("No items in the cart! Add items before proceeding to payment.");
-      return;
+  let totalAmount = parseFloat(document.getElementById("totalAmount").innerText);
+
+  if (isNaN(totalAmount) || totalAmount <= 0) {
+    showAlert("Cart is empty! Please add items before paying.", "error");
+    return;
   }
+
+  let options = {
+    key: "rzp_live_pD8bgC6DxB4zzl", // ✅ Your Live Key
+    amount: Math.round(totalAmount * 100), // Razorpay expects amount in paise (no decimals)
+    currency: "INR",
+    name: "QuickCart SuperMarket",
+    description: "Thank you for shopping!",
+    image: "https://yourdomain.com/logo.png", // Optional logo
+    handler: function (response) {
+      showAlert("✅ Payment Successful! Payment ID: " + response.razorpay_payment_id, "success");
+      updateProductQuantities();
+      setTimeout(() => location.reload(), 2000);
+    },
+    prefill: {
+      name: "Aditi Chodankar",
+      email: "aditi@gmail.com"
+    },
+    theme: {
+      color: "#28a745"
+    }
+  };
+
+  const rzp = new Razorpay(options);
+
+  // ✅ Catch failed attempt
+  rzp.on('payment.failed', function (response) {
+    alert("Oops! Something went wrong.\nPayment Failed\n" + response.error.description);
+  });
+
+  rzp.open();
+}
+
 
   function updateProductQuantities() {
     Object.keys(cart).forEach(productId => {
@@ -111,7 +144,7 @@ function processPayment() {
     });
   }
   // Show payment modal
-  document.getElementById("paymentModal").style.display = "flex";
+  /*document.getElementById("paymentModal").style.display = "flex";
   // ✅ Reduce product quantity in Firebase after successful payment
   const updates = {}; // prepare all updates first
 
@@ -142,10 +175,11 @@ function processPayment() {
           location.reload(); // Reloads the page to clear the cart
       }, 2000);
   }, 1500);
-}
+
 database.ref('products/' + productId).update({
   quantity: updatedQuantity
-});
+});*/
+
 // ✅ Show products page
 function showProducts() {
   document.getElementById("homePage").classList.remove("active");
@@ -165,14 +199,19 @@ function showProducts() {
   Object.keys(products).forEach(productId => {
     const product = products[productId];
     const card = `
-      <div class="product-card">
-        <img src="${product.image}" alt="${product.name}" onerror="this.src='images/default.jpg';">
-        <h3>${product.name}</h3>
-        <p>ID: ${product.id}</p>
-        <p>Price: ₹${product.price}</p>
-        <button onclick="addToCart('${productId}')">Add to Cart</button>
+    <div class="product-card" id="product-${productId}">
+      <img src="${product.image}" alt="${product.name}" onerror="this.src='images/default.jpg';">
+      <h3>${product.name}</h3>
+      <p>Price: ₹${product.price}</p>
+      <button onclick="showProductDetails('${productId}')">About Product</button>
+      <div class="product-popup" id="popup-${productId}" style="display:none;">
+        <strong>${product.name}</strong><br>
+        ID: ${product.id}<br>
+        ${getProductDescription(productId)}
       </div>
-    `;
+    </div>
+  `;
+
     container.innerHTML += card;
   });
 }
@@ -411,5 +450,39 @@ function showAlert(message, type = "success") {
   setTimeout(() => {
     alertBox.style.display = "none";
   }, 2000);
+}
+function showProductDetails(productId) {
+  // First, close any open popups
+  document.querySelectorAll('.product-popup').forEach(popup => {
+    popup.style.display = 'none';
+  });
+
+  // Then open the clicked product's popup
+  const popup = document.getElementById(`popup-${productId}`);
+  if (popup) {
+    popup.style.display = 'block';
+  }
+}
+function getProductDescription(productId) {
+  switch (productId) {
+    case "0012182728":
+      return "Fresh, juicy red apples full of vitamins.";
+    case "0039771949":
+      return "High-quality granulated sugar for everyday use.";
+    case "0039854003":
+      return "Premium basmati rice, long grain, fluffy when cooked.";
+    case "0039854025":
+      return "Crunchy and tasty assorted biscuits for tea-time.";
+    case "0039854036":
+      return "Stone-ground whole wheat flour, rich in fiber.";
+    case "0039855169":
+      return "Rich and aromatic instant coffee, perfect for a refreshing start to your day.";
+    case "0039855180":
+      return "Pure and healthy vegetable cooking oil, ideal for everyday frying and cooking needs.";
+    case "0039855191":
+      return "Gentle shampoo with natural extracts, leaving hair soft, shiny, and nourished.";
+    default:
+      return "No description available.";
+  }
 }
   
