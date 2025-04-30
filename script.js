@@ -95,9 +95,17 @@ function processPayment() {
     name: "QuickCart SuperMarket",
     description: "Test Transaction",
     handler: function (response) {
-      showAlert("✅ Payment Successful! Payment ID: " + response.razorpay_payment_id, "success");
+      document.getElementById("paymentModal").style.display = "flex";
+      document.getElementById("paymentMessage").innerText = "🎉 Payment Successful!";
+      document.getElementById("paymentMessage").style.color = "#28a745";
+    
       updateProductQuantities();
-      setTimeout(() => location.reload(), 2000);
+    
+      setTimeout(() => {
+        document.getElementById("paymentModal").style.display = "none";
+        location.reload();
+      }, 2000);
+    
     },
     prefill: {
       name: "Aditi Chodankar",
