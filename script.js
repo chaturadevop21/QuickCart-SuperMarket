@@ -83,21 +83,19 @@ function generateBill() {
 
 function processPayment() {
   let totalAmount = parseFloat(document.getElementById("totalAmount").innerText);
-
   if (isNaN(totalAmount) || totalAmount <= 0) {
-    showAlert("Cart is empty! Please add items before paying.", "error");
+    showAlert("Cart is empty!", "error");
     return;
   }
 
-  let options = {
-    key: "rzp_live_pD8bgC6DxB4zzl", // ✅ Your Live Key
-    amount: Math.round(totalAmount * 100), // Razorpay expects amount in paise (no decimals)
+  const options = {
+    key: "rzp_test_GmqSaHXzUgzyFE", // ✅ Your Razorpay Test Key
+    amount: totalAmount * 100, // Amount in paise
     currency: "INR",
     name: "QuickCart SuperMarket",
-    description: "Thank you for shopping!",
-    image: "https://yourdomain.com/logo.png", // Optional logo
+    description: "Test Transaction - No actual money involved",
     handler: function (response) {
-      showAlert("✅ Payment Successful! Payment ID: " + response.razorpay_payment_id, "success");
+      showAlert("✅ Test Payment Successful! ID: " + response.razorpay_payment_id, "success");
       updateProductQuantities();
       setTimeout(() => location.reload(), 2000);
     },
@@ -111,15 +109,12 @@ function processPayment() {
   };
 
   const rzp = new Razorpay(options);
-
-  // ✅ Catch failed attempt
-  rzp.on('payment.failed', function (response) {
-    alert("Oops! Something went wrong.\nPayment Failed\n" + response.error.description);
-  });
-
   rzp.open();
-}
 
+  rzp.on('payment.failed', function (response) {
+    alert("Oops! Something went wrong.\nPayment Failed\nReason: " + response.error.description);
+  });
+}
 
   function updateProductQuantities() {
     Object.keys(cart).forEach(productId => {
