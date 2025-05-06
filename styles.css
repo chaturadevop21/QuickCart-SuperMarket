@@ -1005,11 +1005,19 @@ margin-bottom: 5px;
 }
 
 
-iframe {
+/*iframe {
   position: fixed;
   bottom: 20px;
   right: 20px;
   border: none;
   z-index: 9999;
   box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}*/
+
+
+df-messenger {
+  position: fixed !important;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
 }
