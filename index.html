@@ -8,6 +8,9 @@
   <!-- Link external CSS -->
   <link rel="stylesheet" href="styles.css" />
 
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+ 
+
     <!-- Razorpay Checkout Script 👇 -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
@@ -16,15 +19,96 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-  <!-- Your main script -->
-  <script src="script.js" defer></script>
+
 
    <!-- Razorpay Checkout Script 👇 -->
    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 </head>
 
+
 <body>
+
+
+
+
+<!-- Dialogflow Chatbot -->
+<div id="chatbot">
+  <iframe
+  allow="microphone;"
+  width="350"
+  height="430"
+  src="https://console.dialogflow.com/api-client/demo/embedded/5342cb26-491d-492d-9554-2b6775e21694">
+  </iframe>
+  </div>
+
+
+<!-- Account Page -->
+<div id="accountPage" class="page account-container">
+  <h2>👤 My Account Details</h2>
+
+  <div class="account-box">
+    <p><strong>Name:</strong> <span id="accName">N/A</span></p>
+    <p><strong>Email:</strong> <span id="accEmail">N/A</span></p>
+    <p><strong>Phone:</strong> <span id="accPhone">N/A</span></p>
+    <p><strong>Password:</strong> <span>••••••••</span></p>
+  </div>
+
+  <button onclick="showHome()">← Back to Home</button>
+</div>
+
+
+
+
+<!-- FAQs Page -->
+<div id="faqsPage" class="page">
+
+  <main style="padding: 20px; text-align: left; max-width: 800px; margin: auto;">
+    <div class="faq-container">   
+      <h2><b>❓ Frequently Asked Questions❓</b></h2>
+    <div class="faq">
+    <h3><b>🛒 How do I scan a product?</b></h3>
+    <p>Simply type or scan the Product ID into the “Scan Product” box. It will automatically fetch product details and add it to your cart.</p>
+   </div>
+
+   <div class="faq">
+  <h3><b>💳 What payment options are available?</b></h3>
+  <p>We support UPI, debit/credit cards, net banking, wallets, and "Pay Later" options via Razorpay.</p>
+  </div>
+
+  <div class="faq">  
+  <h3><b>🧾 Can I view my previous orders?</b></h3>
+  <p>Yes! Click on the "Profile" > "My Orders" section to view your past purchases and order history.</p>
+  </div>
+
+
+  <div class="faq">   
+  <h3><b>❌ How do I remove an item from my cart?</b></h3>
+  <p>Click the <strong>Remove</strong> button next to the product in your shopping cart table.</p>
+  </div>
+
+
+  <div class="faq">     
+  <h3><b>📃 Is a bill generated after payment?</b></h3>
+  <p>Yes, a digital bill is generated after successful payment. You can also download or print it directly.</p>
+  </div>
+
+  <div class="faq">     
+  <h3><b>📦 Can I save items for later?</b></h3>
+  <p>Currently, we only support instant checkout. Wishlist/save-for-later will be added in future versions.</p>
+  </div>
+
+  <div class="faq">       
+  <h3><b>💬 Need help with something else?</b></h3>
+  <p>You can contact our support via email or chat through the support icon on the homepage.</p>
+  </div>
+
+    <button onclick="showHome()">⬅ Back to Home</button>
+  </main>
+</div>
+
+
+
 
 <!-- Pages content (your original HTML structure is correct) -->
 
@@ -63,12 +147,22 @@ text-align: center;">
 </div>
 
 <!-- Home Page -->
-<div id="homePage" class="page">
+<div id="homePage" class="page" style="display: none;">
   <header><span><b> 🛒 QuickCart SuperMarket 🛒 </b></span></header>
-  <nav>
-    <a href="#" onclick="event.preventDefault(); showHome()">Home</a>
-    <a href="#" onclick="event.preventDefault(); showProducts()">Products</a>
-    <button class="logout-button" onclick="logout()">Logout</button>
+  <nav class="navbar">
+    <button class="nav-button" onclick="showHome()">Home</button>
+    <button class="nav-button" onclick="showProducts()">Products</button>
+  
+    <div class="profile-menu">
+      <button class="nav-button" id="profileBtn" onclick="toggleProfileDropdown()">👤 Profile ▼</button>
+      <div id="profileDropdown" class="dropdown-content">
+        <a href="#" onclick="handleOptionClick('account')">My Account</a>
+        <a href="#" onclick="showOrdersPage(); hideDropdown();">My Orders</a>
+        <a href="#" onclick="showFAQs()">FAQ's</a>
+        <a href="#" onclick="logout()">Log Out</a>
+      </div>
+      
+    </div>
   </nav>
   <main>
     <div class="container">
@@ -115,14 +209,48 @@ text-align: center;">
 <!-- Products Page -->
 <div id="productsPage" class="page">
   <header><b>🛒 QuickCart SuperMarket 🛒</b></header>
-  <nav>
-    <a href="#" onclick="event.preventDefault(); showHome()">Home</a>
-    <a href="#" onclick="event.preventDefault(); showProducts()">Products</a>
-    <button class="logout-button" onclick="logout()">Logout</button>
+  <nav class="navbar">
+    <button class="nav-button" onclick="showHome()">Home</button>
+    <button class="nav-button" onclick="showProducts()">Products</button>
+  
+    <div class="profile-menu">
+      <button id="profileBtnProducts" class="nav-button">👤 Profile ▼</button>
+      <div id="profileDropdownProducts" class="dropdown-content">
+        <a href="#" onclick="handleDropdownOption('account')">My Account</a>
+        <a href="#" onclick="handleDropdownOption('orders')">My Orders</a>
+        <a href="#" onclick="handleDropdownOption('faq')">FAQ's</a>
+        <a href="#" onclick="logout(); hideDropdown();">Log Out</a>
+      </div>
+    </div>
   </nav>
   <main>
     <h2><centre>Available Products</centre></h2>
     <div class="products-container" id="productsContainer"></div>
+    
+    
+  <!-- 🥐 Bakery and Biscuits -->
+  <div class="category-box">
+    <h3 class="category-heading"><center> 🥐 Bakery and Biscuits🥐</center></h3>
+    <div id="bakeryBiscuitsSection" class="product-grid"></div>
+  </div>
+
+  <!-- 🥤 Shakes, Coffee, Drinks and More -->
+  <div class="category-box">
+    <h3 class="category-heading"><center>🥤 Shakes, Coffee, Drinks and More🥤</center></h3>
+    <div id="drinksSection" class="product-grid"></div>
+  </div>
+
+  <!-- 🍟 Snacks and More -->
+  <div class="category-box">
+    <h3 class="category-heading"><center>🍟 Snacks and More🍟</center></h3>
+    <div id="snacksSection" class="product-grid"></div>
+  </div>
+
+  <!-- 🧼 Health and Personal Care -->
+  <div class="category-box">
+    <h3 class="category-heading"><center>🧼 Health and Personal Care🧼</center></h3>
+    <div id="healthSection" class="product-grid"></div>
+  </div>
   </main>
 </div>
 
@@ -136,6 +264,31 @@ text-align: center;">
     <p id="paymentMessage"></p>
   </div>
 </div>
+
+
+<!--order page -->
+<div id="ordersPage" class="page orders-container">
+  <div class="orders-container">
+    <h2 class="orders-heading">📦 My Orders</h2>
+    <div id="ordersList"></div>
+
+    <button onclick="showHome()">← Back to Home</button>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("ordersPage").scrollTop = 0;
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+  });
+</script>
+
+  <!-- Your main script -->
+  <script src="script.js" defer></script>
+
+
+
+
 
 </body>
 </html>
