@@ -21,6 +21,9 @@ let products = {};
 let cart = {};
 
 document.addEventListener("DOMContentLoaded", () => {
+  (function(){
+    emailjs.init("bk2Vm0Xl8N90ELyW7");
+  })();
   fetchProducts();
 
 
@@ -81,6 +84,7 @@ function generateBill() {
   document.getElementById("payNowButton").disabled = false;
 }
 
+// ✅ FIXED: Corrected `processPayment` to ensure invoice email sends properly
 function processPayment() {
   let totalAmount = parseFloat(document.getElementById("totalAmount").innerText);
   if (isNaN(totalAmount) || totalAmount <= 0) {
@@ -89,23 +93,52 @@ function processPayment() {
   }
 
   const options = {
-    key: "rzp_test_GmqSaHXzUgzyFE", // ✅ Your Razorpay Test Key
-    amount: totalAmount * 100,       // Amount in paise
+    key: "rzp_test_GmqSaHXzUgzyFE",
+    amount: totalAmount * 100,
     currency: "INR",
     name: "QuickCart SuperMarket",
     description: "Test Transaction",
+
     handler: function (response) {
       document.getElementById("paymentModal").style.display = "flex";
       document.getElementById("paymentMessage").innerText = "🎉 Payment Successful!";
       document.getElementById("paymentMessage").style.color = "#28a745";
-    
+
       updateProductQuantities();
-    
-      setTimeout(() => {
-        document.getElementById("paymentModal").style.display = "none";
-        location.reload();
-      }, 2000);
-    
+
+      const user = firebase.auth().currentUser;
+      if (user) {
+        database.ref("users/" + user.uid).once("value").then(snapshot => {
+          const userData = snapshot.val();
+
+          if (!userData || !userData.email) {
+            alert("User data not found or missing email. Invoice not sent.");
+            setTimeout(() => location.reload(), 2000);
+            return;
+          }
+
+          const order_id = "ORD" + Date.now();
+          const subtotal = Object.values(cart).reduce((acc, item) => acc + item.price * item.quantity, 0);
+          const gst = subtotal * 0.05;
+          const total = subtotal + gst;
+
+          sendInvoiceEmail(userData, cart, order_id, subtotal, gst, total)
+            .then(() => {
+              setTimeout(() => {
+                document.getElementById("paymentModal").style.display = "none";
+                location.reload();
+              }, 2000);
+            })
+            .catch((error) => {
+              console.error("Email failed:", error);
+              alert("Invoice email failed to send.");
+              setTimeout(() => location.reload(), 2000);
+            });
+        });
+      } else {
+        alert("User not logged in. Cannot send email.");
+        setTimeout(() => location.reload(), 2000);
+      }
     },
     prefill: {
       name: "Aditi Chodankar",
@@ -117,13 +150,112 @@ function processPayment() {
   };
 
   const rzp = new Razorpay(options);
-
   rzp.on('payment.failed', function (response) {
     alert("Oops! Something went wrong.\nPayment Failed\nReason: " + response.error.description);
   });
-
   rzp.open();
 }
+
+function generateItemsHTML(cart) {
+  let html = `<tbody>`; 
+  Object.keys(cart).forEach(productId => {
+    const item = cart[productId];
+    const total = (item.price * item.quantity).toFixed(2);
+    html += `
+      <tr>
+        <td style="border: 1px solid #ccc; padding: 8px;">${item.name}</td>
+        <td style="border: 1px solid #ccc; padding: 8px;">${item.quantity}</td>
+        <td style="border: 1px solid #ccc; padding: 8px;">₹${item.price}</td>
+        <td style="border: 1px solid #ccc; padding: 8px;">₹${total}</td>
+      </tr>`;
+  });
+  html += `</tbody>`;
+  return html;
+}
+
+
+function sendInvoiceEmail(userData, cart, order_id, subtotal, gst, total) {
+  const serviceID = "service_b20ut2g";
+  const templateID = "template_gmht4vj";
+  const publicKey = "bk2Vm0Xl8N90ELyW7";  // ✅ Make sure this is correct
+
+  const itemsHTML = generateItemsHTML(cart);
+  const date = new Date().toLocaleDateString("en-IN");
+
+  const templateParams = {
+    to_name: userData.name,
+    email: userData.email,
+    order_id: order_id,
+    items: itemsHTML,
+    subtotal: subtotal.toFixed(2),
+    gst: gst.toFixed(2),
+    total: total.toFixed(2),
+    date: date
+  };
+
+
+  console.log("📧 Sending invoice email with:", templateParams);
+  // ✅ Return the promise for proper chaining
+  return emailjs.send(serviceID, templateID, templateParams, publicKey)
+  .then(() => {
+    // Store order in user's Firebase account
+    return database.ref("users/" + firebase.auth().currentUser.uid + "/orders/" + order_id).set({
+      order_id: order_id,
+      date: date,
+      subtotal: subtotal.toFixed(2),
+      gst: gst.toFixed(2),
+      total: total.toFixed(2),
+      items: Object.values(cart).map(item => ({
+        name: item.name,
+        quantity: item.quantity,
+        unitPrice: item.price.toFixed(2),
+        total: (item.price * item.quantity).toFixed(2)
+      }))
+    });
+  });}
+
+const items = Object.keys(cart).map(productId => {
+  const item = cart[productId];
+  return {
+    name: item.name,
+    quantity: item.quantity,
+    unitPrice: item.price,
+    total: item.price * item.quantity
+  };
+});
+
+const orderData = {
+  order_id,
+  date: new Date().toLocaleDateString("en-IN"),
+  items: items,
+  subtotal: subtotal.toFixed(2),
+  gst: gst.toFixed(2),
+  total: total.toFixed(2)
+};
+
+database.ref("users/" + user.uid + "/orders/" + order_id).set(orderData);
+  function updateProductQuantities() {
+    Object.keys(cart).forEach(productId => {
+      const purchasedQuantity = cart[productId].quantity;
+      const currentQuantity = products[productId].quantity;
+  
+      if (currentQuantity >= purchasedQuantity) {
+        const newQuantity = currentQuantity - purchasedQuantity;
+  
+        database.ref(`products/${productId}`).update({
+          quantity: newQuantity
+        })
+        .then(() => {
+          console.log(`✅ Updated quantity for ${products[productId].name}: ${newQuantity}`);
+        })
+        .catch(error => {
+          console.error(`❌ Error updating quantity for ${products[productId].name}:`, error);
+        });
+      } else {
+        console.warn(`⚠️ Not enough stock for ${products[productId].name}`);
+      }
+    });
+  }
 
   function updateProductQuantities() {
     Object.keys(cart).forEach(productId => {
@@ -147,67 +279,99 @@ function processPayment() {
       }
     });
   }
-  // Show payment modal
-  /*document.getElementById("paymentModal").style.display = "flex";
-  // ✅ Reduce product quantity in Firebase after successful payment
-  const updates = {}; // prepare all updates first
-
-  Object.keys(cart).forEach(productId => {
-    const item = cart[productId];
-    const newQuantity = products[productId].quantity - item.quantity;
-    if (newQuantity >= 0) {
-      updates[`products/${productId}/quantity`] = newQuantity; // prepare update
-    }
+  
+function hideAllPages() {
+  document.querySelectorAll('.page').forEach(page => {
+    page.classList.remove('active');
   });
+}
 
-  // Now update database
-  database.ref().update(updates)
-    .then(() => {
-      console.log("Quantities updated successfully in database!");
-    })
-    .catch(error => {
-      console.error("Error updating quantities:", error);
-    });
+function showAccountPage() {
+  hideAllPages(); // hide all other sections
+  document.getElementById("accountPage").classList.add("active");
 
-  setTimeout(() => {
-      document.getElementById("paymentMessage").innerText = "🎉 Payment Successful!";
-      document.getElementById("paymentMessage").style.color = "#28a745";
+  const user = firebase.auth().currentUser;
 
-      setTimeout(() => {
-          document.getElementById("paymentModal").style.display = "none";
-          updateProductQuantities();
-          location.reload(); // Reloads the page to clear the cart
-      }, 2000);
-  }, 1500);
+  if (user) {
+    const uid = user.uid;
 
-database.ref('products/' + productId).update({
-  quantity: updatedQuantity
-});*/
+    database.ref("users/" + uid).once("value")
+      .then(snapshot => {
+        const userData = snapshot.val();
+        document.getElementById("accName").textContent = userData.name || "N/A";
+        document.getElementById("accEmail").textContent = userData.email || "N/A";
+        document.getElementById("accPhone").textContent = userData.phone || "N/A";
+        // password is not stored here for security reasons
+      })
+      .catch(error => {
+        console.error("Error fetching user data:", error);
+        showAlert("Unable to load account info", "error");
+      });
+  } else {
+    showAlert("User not logged in", "error");
+  }
+}
+
+
+function handleOptionClick(option) {
+  // Hide the dropdown
+  document.getElementById('profileDropdown').style.display = 'none';
+
+  // Handle the option logic
+  if (option === 'faq') {
+    showFAQPage();
+  } else if (option === 'orders') {
+    showOrdersPage();
+  } else if (option === 'privacy') {
+    showPrivacyPage();
+  } else if (option === 'account') {
+    showAccountPage(); 
+  }
+}
+
+function showFAQs() {
+  hideAllPages(); // This hides all other sections
+  document.getElementById("faqsPage").classList.add("active");
+}
+
+function goToHome() {
+  document.getElementById('faqPage').classList.remove('active');
+  document.getElementById('homePage').classList.add('active');
+}
 
 // ✅ Show products page
 function showProducts() {
   document.getElementById("homePage").classList.remove("active");
   document.getElementById("productsPage").classList.add("active");
 
-  const container = document.getElementById("productsContainer");
-  container.innerHTML = "<h3>Loading...</h3>";
-
-  // Wait for products to load
-  if (Object.keys(products).length === 0) {
-    setTimeout(showProducts, 300); // Try again after 300ms
-    return;
-  }
-
-  container.innerHTML = ""; // Clear
+   // New container IDs
+   const bakeryBiscuits = document.getElementById("bakeryBiscuitsSection");
+   const drinks = document.getElementById("drinksSection");
+   const snacks = document.getElementById("snacksSection");
+   const health = document.getElementById("healthSection");
+ 
+   // Clear old content
+   bakeryBiscuits.innerHTML = "";
+   drinks.innerHTML = "";
+   snacks.innerHTML = "";
+   health.innerHTML = "";
+ 
 
   Object.keys(products).forEach(productId => {
     const product = products[productId];
+    const isOutOfStock = product.quantity <= 0;
     const card = `
     <div class="product-card" id="product-${productId}">
       <img src="${product.image}" alt="${product.name}" onerror="this.src='images/default.jpg';">
       <h3>${product.name}</h3>
       <p>Price: ₹${product.price}</p>
+      ${isOutOfStock ? `
+        <p style="color: red; font-weight: bold;">Out of Stock</p>
+          <button disabled style="background-color: grey; cursor: not-allowed;">About Product</button>
+        ` : `
+
       <button onclick="showProductDetails('${productId}')">About Product</button>
+  `}
       <div class="product-popup" id="popup-${productId}" style="display:none;">
         <strong>${product.name}</strong><br>
         ID: ${product.id}<br>
@@ -215,11 +379,21 @@ function showProducts() {
       </div>
     </div>
   `;
+  const name = product.name.toLowerCase();
 
-    container.innerHTML += card;
-  });
+  if (name.includes("cookie") || name.includes("biscuit") || name.includes("chocolate")) {
+    bakeryBiscuits.innerHTML += card;
+  } else if (name.includes("drink") || name.includes("milkshake") || name.includes("coffee")) {
+    drinks.innerHTML += card;
+  } else if (name.includes("chips") || name.includes("namkeen") || name.includes("bhujiya")) {
+    snacks.innerHTML += card;
+  } else if (name.includes("soap") || name.includes("moov") || name.includes("spray")) {
+    health.innerHTML += card;
+  }
+});
+
+document.getElementById("productsPage").scrollIntoView({ behavior: 'smooth' });
 }
-
 
 // ✅ Scan product
 function handleEnter(event) {
@@ -374,7 +548,7 @@ function register() {
     
       setTimeout(() => {
         showLogin(); // move to login page AFTER 2 seconds
-      }, 2000); // 2 seconds wait (or 5000 if you made popup time 5 sec)
+      }, 1000); // 2 seconds wait (or 5000 if you made popup time 5 sec)
       
     })
     .catch(error => {
@@ -383,7 +557,8 @@ function register() {
     });
 }
 
-function login() {
+function login() 
+{
   const email = document.getElementById("loginEmail").value.trim();
   const password = document.getElementById("loginPassword").value.trim();
 
@@ -401,6 +576,17 @@ function login() {
         document.getElementById("homePage").classList.add("active");
         document.getElementById("scannedNumber").focus();
       }, 2000); // ⏳ Wait for 2 seconds (popup shows), THEN go to home page
+      auth.signInWithEmailAndPassword(email, password)
+  .then(() => {
+    showAlert("Login successful!", "success");
+
+    setTimeout(() => {
+      document.getElementById("loginPage").style.display = "none";
+      document.getElementById("registerPage").style.display = "none";
+      document.getElementById("homePage").style.display = "block";
+      document.getElementById("scannedNumber").focus();
+    }, 1000);
+  })
     })
 
     .catch(error => {
@@ -421,6 +607,15 @@ function logout() {
   location.reload();
 }
 
+firebase.auth().onAuthStateChanged(user => {
+  if (user) {
+    database.ref("users/" + user.uid).once("value").then(snapshot => {
+      const name = snapshot.val()?.name || "My Account";
+      document.getElementById("profileBtn").title = name;
+    });
+  }
+});
+
 // ✅ Switching Pages
 function showRegister() {
   document.getElementById("loginPage").classList.remove("active");
@@ -433,6 +628,7 @@ function showLogin() {
 }
 
 function showHome() {
+  hideAllPages();  // This hides all other `.page` sections
   document.getElementById("productsPage").classList.remove("active");
   document.getElementById("homePage").classList.add("active");
 }
@@ -470,23 +666,106 @@ function showProductDetails(productId) {
 function getProductDescription(productId) {
   switch (productId) {
     case "0012182728":
-      return "Fresh, juicy red apples full of vitamins.";
+      return "Flavored dairy-based drinks ideal for a quick energy boost.";
     case "0039771949":
-      return "High-quality granulated sugar for everyday use.";
+      return " Ready-to-drink Nescafé brews for instant freshness.";
     case "0039854003":
-      return "Premium basmati rice, long grain, fluffy when cooked.";
+      return "Cinthol’s refreshing body soap for everyday freshness and hygiene.";
     case "0039854025":
-      return "Crunchy and tasty assorted biscuits for tea-time.";
+      return "Treat yourself with classic crunchy chocolate bars.";
     case "0039854036":
-      return "Stone-ground whole wheat flour, rich in fiber.";
+      return "All-time favorite potato chips in different flavors for snacking fun.";
     case "0039855169":
-      return "Rich and aromatic instant coffee, perfect for a refreshing start to your day.";
+      return " Light and crisp snacks to pair with tea or coffee.";
     case "0039855180":
-      return "Pure and healthy vegetable cooking oil, ideal for everyday frying and cooking needs.";
+      return "Carbonated favorites like Pepsi, Coke, and Sprite for refreshment anytime.";
     case "0039855191":
-      return "Gentle shampoo with natural extracts, leaving hair soft, shiny, and nourished.";
+      return "Rich choco-filled indulgent cookies, perfect for dessert cravings.";
     default:
       return "No description available.";
   }
 }
+document.addEventListener("DOMContentLoaded", () => {
+  const profileBtn = document.getElementById("profileBtn");
+  const dropdown = document.getElementById("profileDropdown");
+
+  if (profileBtn && dropdown) {
+  profileBtn.addEventListener("click", () => {
+    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+  });
+
+  window.addEventListener("click", function (event) {
+    if (!event.target.closest(".profile-menu")) {
+      dropdown.style.display = "none";
+    }
+  });
+}
+});
+function toggleProfileDropdown() {
+  const dropdown = document.getElementById("profileDropdown");
+  dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+
   
+}
+
+
+function showOrdersPage() {
+  hideAllPages();
+  document.getElementById("ordersPage").classList.add("active");
+  window.scrollTo({ top: 0, behavior: 'auto' });
+
+  const user = firebase.auth().currentUser;
+  const container = document.getElementById("ordersList");
+  container.innerHTML = "<p>Loading orders...</p>";
+
+  if (!user) return;
+
+  database.ref("users/" + user.uid + "/orders").once("value")
+    .then(snapshot => {
+      container.innerHTML = "";
+      if (!snapshot.exists()) {
+        container.innerHTML = "<p>No orders found.</p>";
+        return;
+      }
+
+      snapshot.forEach(orderSnap => {
+        const order = orderSnap.val();
+        let itemsHTML = "";
+
+        for (let item of order.items) {
+          const productImage = products[item.name]?.image || 'images/default.jpg'; // fallback
+          itemsHTML += `
+            <li style="margin-bottom:10px;">
+              <img src="${productImage}" alt="${item.name}" style="width:50px; height:50px; border-radius:6px; margin-right:10px; vertical-align:middle;">
+              ${item.name} - ${item.quantity} x ₹${item.unitPrice} = ₹${item.total}
+            </li>`;
+        }
+
+        container.innerHTML += `
+          <div class="order-card" style="border: 1px solid #ccc; padding: 15px; margin-bottom: 20px;">
+            <h4>🧾 <span style="color:green;">Order ID: ${order.order_id}</span></h4>
+            <p><strong>Date:</strong> ${order.date}</p>
+            <ul>${itemsHTML}</ul>
+            <p><strong>Total Paid:</strong> ₹${order.total}</p>
+          </div>`;
+      });
+    })
+    .catch(error => {
+      container.innerHTML = "<p>Error loading orders.</p>";
+      console.error("Error fetching orders:", error);
+    });
+}
+
+
+function hideDropdown() {
+  document.querySelectorAll('.dropdown-content').forEach(drop => {
+    drop.style.display = 'none';
+  });
+}
+
+function goToHome() {
+  hideAllPages(); // hide all other pages properly
+  document.getElementById("homePage").style.display = "block";
+  document.getElementById("homePage").classList.add("active");
+}
+
