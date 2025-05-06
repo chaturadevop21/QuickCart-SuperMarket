@@ -32,15 +32,6 @@
 
 
 
-<!-- Dialogflow Chatbot -->
-<div id="chatbot">
-  <iframe
-  allow="microphone;"
-  width="350"
-  height="430"
-  src="https://console.dialogflow.com/api-client/demo/embedded/5342cb26-491d-492d-9554-2b6775e21694">
-  </iframe>
-  </div>
 
 
 <!-- Account Page -->
@@ -287,7 +278,14 @@ text-align: center;">
   <script src="script.js" defer></script>
 
 
-
+<!-- Dialogflow Chatbot -->
+<script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
+<df-messenger
+  intent="WELCOME"
+  chat-title="QuickCartBot"
+  agent-id="5342cb26-491d-492d-9554-2b6775e21694"
+  language-code="en"
+></df-messenger>
 
 
 </body>
