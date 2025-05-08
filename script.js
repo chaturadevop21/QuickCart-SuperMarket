@@ -82,6 +82,7 @@ function generateBill() {
   document.getElementById("totalAmount").innerText = total.toFixed(2);
 
   document.getElementById("payNowButton").disabled = false;
+document.getElementById("payNowButton").classList.add("ready-to-pay");
 }
 
 // ✅ FIXED: Corrected `processPayment` to ensure invoice email sends properly
@@ -93,7 +94,7 @@ function processPayment() {
   }
 
   const options = {
-    key: "rzp_test_GmqSaHXzUgzyFE",
+    key: "rzp_live_pD8bgC6DxB4zzI",
     amount: totalAmount * 100,
     currency: "INR",
     name: "QuickCart SuperMarket",
@@ -141,13 +142,21 @@ function processPayment() {
       }
     },
     prefill: {
-      name: "Aditi Chodankar",
-      email: "aditi@gmail.com"
+      name: "",
+      email: "",
+      contact: ""
     },
     theme: {
       color: "#28a745"
     }
   };
+
+  const phone = document.getElementById("userPhone").value.trim();
+  if (!phone) {
+    showAlert("Please enter your phone number before proceeding.");
+    return;
+  }
+  options.prefill.contact = phone;
 
   const rzp = new Razorpay(options);
   rzp.on('payment.failed', function (response) {
@@ -449,6 +458,8 @@ if (product.quantity <= 0) {
       price: product.price,
       quantity: 1
     };
+    document.getElementById("payNowButton").disabled = true;
+document.getElementById("payNowButton").classList.remove("ready-to-pay");
   }
   
 
@@ -493,7 +504,10 @@ function updateCartDisplay() {
 function removeFromCart(productId) {
   delete cart[productId];
   updateCartDisplay();
+  document.getElementById("payNowButton").disabled = true;
+document.getElementById("payNowButton").classList.remove("ready-to-pay");
 }
+
 
 function increaseQuantity(productId) {
   const product = products[productId];
@@ -504,7 +518,10 @@ function increaseQuantity(productId) {
   } else {
     showAlert("Cannot add more. Only " + product.quantity + " available.");
   }
+  document.getElementById("payNowButton").disabled = true;
+document.getElementById("payNowButton").classList.remove("ready-to-pay");
 }
+
 
 function decreaseQuantity(productId) {
   if (cart[productId].quantity > 1) {
@@ -513,7 +530,10 @@ function decreaseQuantity(productId) {
     delete cart[productId];
   }
   updateCartDisplay();
+  document.getElementById("payNowButton").disabled = true;
+document.getElementById("payNowButton").classList.remove("ready-to-pay");
 }
+
 
 // ✅ Login / Register / Logout functions (same as before, no issues)
 
@@ -579,12 +599,22 @@ function login()
       auth.signInWithEmailAndPassword(email, password)
   .then(() => {
     showAlert("Login successful!", "success");
+    document.getElementById("chatbotContainer").style.display = "block";
 
     setTimeout(() => {
       document.getElementById("loginPage").style.display = "none";
       document.getElementById("registerPage").style.display = "none";
       document.getElementById("homePage").style.display = "block";
       document.getElementById("scannedNumber").focus();
+      
+      const dfMessenger = document.querySelector("df-messenger");
+      const iframe = dfMessenger?.shadowRoot?.querySelector("iframe");
+      if (iframe) {
+        iframe.contentWindow.postMessage(
+          { event: "df-emit-custom-event", eventName: "WELCOME", data: {} },
+          "*"
+        );
+      }
     }, 1000);
   })
     })
@@ -601,10 +631,14 @@ function login()
       }
     });
 }
+2000;
+
 
 function logout() {
   showAlert("Logged out successfully!");
+   document.getElementById("chatbotContainer").style.display = "none";
   location.reload();
+ 
 }
 
 firebase.auth().onAuthStateChanged(user => {
