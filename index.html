@@ -29,14 +29,72 @@
 
 <body>
 
-
+<!-- Dialogflow Chatbot (top-right corner) -->
+<script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
+<div id="chatbotContainer" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 9999;">
+  
   <df-messenger
   intent="WELCOME"
   chat-title="QuickCartBot"
   agent-id="5342cb26-491d-492d-9554-2b6775e21694"
   language-code="en"
-></df-messenger>
+>
+</df-messenger>
+  
+</div>
 
+<script>
+  setTimeout(() => {
+  window.addEventListener('DOMContentLoaded', () => {
+    
+  const dfMessenger = document.querySelector("df-messenger");
+
+  const interval = setInterval(() => {
+    const iframe = dfMessenger?.shadowRoot?.querySelector("iframe");
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage(
+        { event: "df-emit-custom-event", eventName: "WELCOME", data: {} },
+        "*"
+      );
+      clearInterval(interval); // success: stop checking
+    }
+  }, 300); // Check every 300ms
+}, 1000); // Start checking after 1s
+
+
+      if (dfMessenger && dfMessenger.shadowRoot) {
+        const style = document.createElement("style");
+        style.textContent = `
+          df-messenger-chat {
+            bottom: auto !important;
+            top: 80px !important;
+            right: 20px !important;
+            left: auto !important;
+            z-index: 9999 !important;
+          }
+
+          df-messenger-launcher {
+            bottom: auto !important;
+            top: 20px !important;
+            right: 20px !important;
+            left: auto !important;
+            z-index: 9999 !important;
+          }
+        `;
+        dfMessenger.shadowRoot.appendChild(style);
+        clearInterval(interval);
+      }
+    }, 100);
+  
+  // Auto-open after 2 seconds
+  setTimeout(() => {
+    const dfMessenger = document.querySelector("df-messenger");
+    const iframe = dfMessenger?.shadowRoot?.querySelector("iframe");
+    if (iframe) {
+      iframe.contentWindow.postMessage({ event: "df-messenger-open" }, "*");
+    }
+  }, 2000);
+</script>
 
 <!-- Account Page -->
 <div id="accountPage" class="page account-container">
@@ -193,7 +251,12 @@ text-align: center;">
           <p><strong>GST (5%):</strong> ₹<span id="taxAmount">0.00</span></p>
           <p><strong>Total Amount:</strong> ₹<span id="totalAmount">0.00</span></p>
           <hr>
+
+          
+      
           <button class="checkout-btn" onclick="generateBill()">📝 Generate Bill</button>
+          <label for="userPhone"><strong>📱 Enter Your Phone Number for UPI:</strong></label>
+          <input type="text" id="userPhone" placeholder="Enter phone number" required />
           <button class="checkout-btn" id="payNowButton" onclick="processPayment()" disabled>💳 Proceed to Payment</button>
         </div>
       </div>
@@ -282,14 +345,8 @@ text-align: center;">
   <script src="script.js" defer></script>
 
 
-<!-- Dialogflow Chatbot -->
-<script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
-<df-messenger
-  intent="WELCOME"
-  chat-title="QuickCartBot"
-  agent-id="5342cb26-491d-492d-9554-2b6775e21694"
-  language-code="en"
-></df-messenger>
+
+
 
 </body>
 </html>
