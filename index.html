@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+<script src="https://polyfill.io/v3/polyfill.min.js?features=default%2CPromise%2Cfetch%2CArray.prototype.includes%2CObject.entries"></script>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6,Promise,fetch"></script>
   <title>QuickCart SuperMarket</title>
 
   <!-- Link external CSS -->
@@ -22,8 +22,7 @@
 
 
 
-   <!-- Razorpay Checkout Script 👇 -->
-   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
 
 </head>
 
@@ -315,7 +314,7 @@ text-align: center;">
 
 <!-- Payment Modal -->
  
-<div id="paymentModal" class="modal">
+<div id="paymentModalBackdrop" style="display:none;" class="payment-modal">...</div>
   <div class="modal-content">
     <h2 id="paymentMessage">Processing Payment...</h2>
   </div>
@@ -342,7 +341,7 @@ text-align: center;">
   });
 </script>
 
-<!-- Your main script -->
+  <!-- Your main script -->
   <script src="script-es5.js" defer></script>
 
 
